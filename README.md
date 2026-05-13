@@ -354,29 +354,56 @@ kubectl exec -it nginx-d64b868c9-mvt6h -n ukf -c nginx -- bash
 
 ---
 
-# 1. Vygeneruj nejaký traffic (každý curl pridá riadok do access.log)
-curl http://localhost:30080
-curl http://localhost:30080
-curl http://localhost:30080
+### 11. Vygenerovanie traffic-u na access.log
+Každý curl request nginx zapíše ako jeden riadok do `access.log`.
 
-# 2. Pozri logy v aktuálnom pode
+```bash
+curl http://localhost:30080
+curl http://localhost:30080
+curl http://localhost:30080
+```
+
+---
+
+### 12. Zobrazenie logov v aktuálnom pode
+Po 3 requestoch by mali byť v access.log 3 riadky.
+
+```bash
 kubectl -n exam-budis exec deployment/hello-app -- cat /var/log/nginx/access.log
-# Uvidíš 3 riadky
+```
 
-# 3. Zabi pod (deployment automaticky vytvorí nový)
+---
+
+### 13. Zmazanie podu (deployment vytvorí nový)
+Test perzistencie — zmazaný pod sa automaticky znovu vytvorí cez Deployment.
+
+```bash
 kubectl -n exam-budis delete pod -l app=hello-app
+```
 
-# 4. Počkaj sekundu, potom znova pozri logy v NOVOM pode
+---
+
+### 14. Overenie že logy prežili reštart
+Pozri logy v NOVOM pode — mali by tam byť tie isté 3 riadky. Dôkaz, že PVC zachoval dáta cez reštart podu.
+
+```bash
 kubectl -n exam-budis exec deployment/hello-app -- cat /var/log/nginx/access.log
-# Tie isté 3 riadky stále tam → dôkaz že prežili reštart podu
+```
 
-# if secret
+---
 
+### 15. Test autorizácie endpointu `/logs` cez X-Token hlavičku
+nginx kontroluje premennú `$http_x_token` voči hodnote v configu. Bez hlavičky alebo so zlým tokenom vracia 403.
+
+```bash
+# bez tokenu → 403
 curl.exe http://localhost:30081/logs
-# → HTTP 403
 
+# so správnym tokenom → 200, vypíše access.log
 curl.exe -H "X-Token: tajneheslo123" http://localhost:30081/logs
-# → HTTP 200, vypíše access.log
 
+# so zlým tokenom → 403
 curl.exe -H "X-Token: zlytoken" http://localhost:30081/logs
-# → HTTP 403
+```
+
+---

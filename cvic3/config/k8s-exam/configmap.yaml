@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: exam-budis-template
+data:
+  SITE_TITLE: "Môj template web"
+  MESSAGE: "Vitajte na stránke vygenerovanej InitContainerom z hodnôt v ConfigMape."
+  THEME: "#2c5282"

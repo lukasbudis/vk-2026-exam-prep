@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+  namespace: exam-budis-upload
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      volumes:
+      - name: app-code
+        configMap:
+          name: app-config
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: upload-pv-claim
+      initContainers:
+      - name: init-uploads
+        image: busybox
+        command:
+        - sh
+        - -c
+        - |
+          chmod 777 /work
+          [ -f /work/README.txt ] || echo "Ukázkový súbor - vytvorený InitContainerom" > /work/README.txt
+        volumeMounts:
+        - name: uploads
+          mountPath: /work
+      containers:
+      - name: container1
+        image: php:apache
+        ports:
+        - containerPort: 80
+        envFrom:
+        - configMapRef:
+            name: app-config
+        volumeMounts:
+        - name: app-code
+          mountPath: /var/www/html/index.php
+          subPath: index.php
+        - name: uploads
+          mountPath: /var/www/html/uploads

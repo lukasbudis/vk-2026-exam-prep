@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: php-config
+  namespace: ukf
+data:
+  php.ini: |
+    display_errors = On
+    error_reporting = E_ALL
+    memory_limit = 256M
+    upload_max_filesize = 20M
+    post_max_size = 21M

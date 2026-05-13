@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-nginx-app
+  namespace: ukf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-nginx-app
+  template:
+    metadata:
+      labels:
+        app: php-nginx-app
+    spec:
+      volumes:
+        - name: php-config-volume
+          configMap:
+            name: php-config
+        - name: nginx-config-volume
+          configMap:
+            name: nginx-config
+        - name: app-code
+          emptyDir: {}
+        - name: persistent-storage
+          persistentVolumeClaim:
+            claimName: ukf-pv-claim
+
+      initContainers:
+        - name: init-copy-code
+          image: ppsdocker/vk-2026-be:latest
+          command: ["sh", "-c", "cp -r /var/www/html/* /app"]
+          volumeMounts:
+            - name: app-code
+              mountPath: /app
+
+      containers:
+        - name: php-fpm
+          image: ppsdocker/vk-2026-be:latest
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: php-config-volume
+              mountPath: /usr/local/etc/php/php.ini
+              subPath: php.ini
+            - name: app-code
+              mountPath: /var/www/html
+            - name: persistent-storage
+              mountPath: /var/www/html/uploads
+
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+            - name: app-code
+              mountPath: /var/www/html

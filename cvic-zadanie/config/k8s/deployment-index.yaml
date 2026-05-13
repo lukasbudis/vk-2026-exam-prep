@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apache-php
+  namespace: ukf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apache-php
+  template:
+    metadata:
+      labels:
+        app: apache-php
+    spec:
+      containers:
+      - name: apache-php
+        image: php:8.2-apache
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: php-config-volume
+          mountPath: /usr/local/etc/php/php.ini
+          subPath: php.ini
+        - name: html-config-volume
+          mountPath: /var/www/html
+      volumes:
+      - name: php-config-volume
+        configMap:
+          name: php-config
+      - name: html-config-volume
+        configMap:
+          name: html-config

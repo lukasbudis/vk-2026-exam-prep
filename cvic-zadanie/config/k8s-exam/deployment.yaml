@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+  namespace: exam-budis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      volumes:
+      - name: volume1
+        configMap:
+          name: app-config
+      - name: logs
+        persistentVolumeClaim:
+         claimName: ukf-pv-claim
+      containers:
+      - name: container1
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: volume1
+          mountPath: /usr/share/nginx/html
+        - name: logs
+          mountPath: /var/log/nginx/
+

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cvic-config
+  namespace: exam-budis-logapi
+data:
+  log_level: INFO
+  log_dir: var/log/nginx
+  log_file: access.log
+  default.conf: |
+    server {
+      listen 80;
+      access_log /var/log/nginx/access.log;
+      error_log  /var/log/nginx/error.log info;
+
+      location = / {
+        default_type text/plain;
+        return 200 "ok - request logged\n";
+      }
+
+      location = /logs {
+        if ($http_x_token != "tajneheslo123") {
+          return 403;
+        }
+        default_type text/plain;
+        alias /var/log/nginx/access.log;
+      }
+    }

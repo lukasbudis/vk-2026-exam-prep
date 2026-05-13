@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: exam-budis-upload
+data:
+  UPLOAD_DIR: "/var/www/html/uploads"
+  MAX_UPLOAD_MB: "5"
+  APP_TITLE: "Mini Upload Galéria"
+  index.php: |
+    <?php
+    $uploadDir = getenv('UPLOAD_DIR') ?: '/var/www/html/uploads';
+    $maxMB = (int)(getenv('MAX_UPLOAD_MB') ?: 5);
+    $title = getenv('APP_TITLE') ?: 'Upload Gallery';
+
+    @mkdir($uploadDir, 0755, true);
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['file']['name'])) {
+        $f = $_FILES['file'];
+        if ($f['error'] === UPLOAD_ERR_OK && $f['size'] <= $maxMB * 1024 * 1024) {
+            $safe = preg_replace('/[^A-Za-z0-9._-]/', '_', basename($f['name']));
+            move_uploaded_file($f['tmp_name'], $uploadDir . '/' . $safe);
+        }
+        header('Location: /');
+        exit;
+    }
+
+    $files = array_values(array_diff(scandir($uploadDir) ?: [], ['.', '..']));
+    ?>
+    <!DOCTYPE html>
+    <html lang="sk">
+    <head>
+      <meta charset="utf-8">
+      <title><?= htmlspecialchars($title) ?></title>
+    </head>
+    <body>
+      <h1><?= htmlspecialchars($title) ?></h1>
+      <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+      </form>
+      <p>Max upload: <?= $maxMB ?> MB</p>
+      <h2>Uložené súbory (<?= count($files) ?>)</h2>
+      <ul>
+        <?php foreach ($files as $f): ?>
+          <li><?= htmlspecialchars($f) ?></li>
+        <?php endforeach; ?>
+      </ul>
+    </body>
+    </html>
